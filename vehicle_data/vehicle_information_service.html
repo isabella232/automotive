@@ -114,10 +114,10 @@
     </section>
 
     <!-- Introduction -->
-    <section>
+    <section id="introduction" class="informative">	    
       <h2>Introduction</h2>
 
-      <p>The vehicle SHALL expose vehicle signals and static data via a WebSocket. This
+      <p>The vehicle will expose vehicle signals and static data via a WebSocket. This
       enables a client to GET or SET vehicle signals and data; to SUBSCRIBE to receive
       notifications and to UNSUBSCRIBE from receiving notifications.</p>
 
@@ -142,35 +142,80 @@
       <p>A future revision of this specification may consider additionally exposing vehicle signals
       via a RESTful web service but this is out of scope for this version of the specification.</p>
 
-      <p>A component or module running on the vehicle SHALL create a WebSocket instance which will listen for an inbound
+      <p>A component or module running on the vehicle will create a WebSocket instance which will listen for an inbound
       connection request from a client to enable secure access to vehicle signals. In this specification this module is referred
       to as the 'WebSocket Vehicle Information Service' (WVIS) or for simplicity as 'the server'.</p>
-
-      <p>This specification assumes that a single WebSocket is used to enable communication between a client application
-      and the server. It is not explicitly prohibited for the client to request that the server opens more than one WebSocket,
-      however, the server may refuse to open a subsequent WebSocket connection and the client is responsible for handling this
-      gracefully.</p>
-
-      <p>If more than one WebSocket connection is established between a client application and the server then each connection
-      MUST be managed independently. For example, subscriptions created using a particular WebSocket connection SHALL only trigger
-      notifications via that connection and the client MUST use that WebSocket connection to unsubscribe. </p>
-
-      <p>If more than one WebSocket connection has been established
-      between one or more clients and a particular server instance, there
-      is a risk that race conditions and concurrency issues could occur.
-      An example of this would be where two or more WebSocket connections
-      are used to update a particular setting at the same time.</p>
-
-      <p>Unless explicitly stated otherwise, the client can only assume
-      that the server implements a simple concurrency model where lost
-      updates and dirty reads could potentially occur if the server has
-      more than one WebSocket connection open.</p>
 
       <p>It is recommended that this Vehicle Information Service Specification (VISS) is read in conjunction with the W3C Vehicle 
       Information API Specification (VIAS). The Vehicle Information API Specification defines a client API that wraps the data access 
       and security primitives defined in this Service Specification. It has been defined to support the development of  
       'standards-compliant' JavaScript libraries that can be used by web based clients.</p>
-      <p>The Vehice Information Service API MAY be invoked directly, the following example illustrates how a client could invoke the VISS API.
+	    
+        <p>The target platform supported by the specification is exclusively passenger vehicles. Use of this
+	specification for non-passenger applications (for example heavy machinery, marine and airline infotainment) is
+	not prohibited, but is not covered in the design or content of the API.</p>
+
+	<p>An example use case could be the implementation of a 'Home Mechanic' application that provides warnings if any
+	the following need attention: tire pressure, engine oil level, washer fluid level and battery charge level.</p>
+
+	<p>Exposing vehicle signals in a standardized manner facilitates the integration of vehicles within the Web of Things (WoT)
+	and supports future use case innovations in a variety of fields including transportation, safety, navigation, energy management,
+	smart transportation and consumer infotainment.</p>
+	    
+	<p>The data format used for client/server communication within this specification is JSON encoded strings, however other data formats may be supported in future versions of the specification.</p>
+      </section>
+
+      <!-- Conformance -->
+      <section id="conformance">
+	<p>This specification defines conformance criteria that apply to a single product: specifically the 'in-vehicle'
+	WebSocket <dfn>Vehicle Information Service</dfn> that implements the interfaces, semantics and behaviour
+	defined in this document. For simplicity, this usually is referred to as the 'WebSocket Server' or just 'the server'</p>
+      </section>
+
+      <!-- Terminology -->
+      <section id="terminology">
+	<h2>Terminology</h2>
+ 	<p>The term 'WebSocket' when used in this document, is as defined in the W3C WebSocket API
+ 	(see <a href="https://www.w3.org/TR/2011/WD-websockets-20110929">here</a>) and the WebSocket Protocol
+ 	(see <a href="https://tools.ietf.org/html/rfc6455">RFC6455</a>).</p>
+      </section>
+
+      <!-- Table of Figures -->
+      <section id="tof"></section>
+
+      <!-- Architecture -->
+      <section id="architecture" class="informative">
+        <h2>Architecture</h2>
+        <h3>Overview</h3>
+      <p>In a typical vehicle design, signals and data are transmitted between Electronic Control Units (ECUs) connected
+      via internal vehicle networks. These include Controller Area Networks (CAN), Media Oriented Systems Transport (MOST)
+      and Local Interconnect Networks (LIN). ECUs on these networks broadcast messages on network buses, and other ECUs on the
+      bus respond to the messages.</p>
+
+      <p>In the component diagram included below, the internal vehicle CAN, MOST and LIN networks and the ECUs that communicate
+      via these networks are abstracted and for simplicity, represented by the <dfn>System</dfn> component.</p>
+
+      <p>For safety, security and commercial reasons not all clients should be able to GET, SET or SUBSCRIBE to particular vehicle
+      signals and data attributes. As a consequence, access-control must be managed so clients cannot simply connect directly to ECUs
+      or to CAN, MOST or LIN network buses.</p>
+
+      <p>In this specification, the term 'signal' refers to a value that can change over time, for example, vehicle speed,
+      whilst 'static data' or simply 'data' is used for a value that does not change e.g. vehicle length.</p>
+
+      <p>The vehicle signals and static data that are available within the vehicle System are exposed in a controlled
+      manner to the Web Socket Server. The interface and communication mechanisms that are used between the vehicle System and
+      the Web Socket Server are outside of the scope of this specification.</p>
+
+      <figure>
+        <img src="images/W3C_Vehicle_APIs_Component_Diagram_v1_4.png" alt="Component diagram showing W3C Vehicle Information APIs">
+        <figcaption>Diagram showing Components that implement the W3C Vehicle Information APIs and their clients</figcaption>
+      </figure>
+
+      <h3>WebSocket Server</h3>
+      <p>The <dfn>WebSocket Server</dfn> is the vehicle system that is responsible for exposing vehicle signals and data to
+      its clients by implementing the interface and behaviours defined in this <dfn>Vehicle Information Service Specification (VISS)</dfn>.</p>
+
+<p>The Vehice Information Service API MAY be invoked directly, the following example illustrates how a client could invoke the VISS API.
       This simplified example is for illustrative purposes only, it does not show error handling and is not
 	intended to be commercial code.</p>
 
@@ -215,70 +260,27 @@
 			};
 		}
 	</pre>
-        <p>The target platform supported by the specification is exclusively passenger vehicles. Use of this
-	specification for non-passenger applications (for example heavy machinery, marine and airline infotainment) is
-	not prohibited, but is not covered in the design or content of the API.</p>
+      
+      <p>This specification assumes that a single WebSocket is used to enable communication between a client application
+      and the server. It is not explicitly prohibited for the client to request that the server opens more than one WebSocket,
+      however, the server may refuse to open a subsequent WebSocket connection and the client is responsible for handling this
+      gracefully.</p>
 
-	<p>An example use case could be the implementation of a 'Home Mechanic' application that provides warnings if any
-	the following need attention: tire pressure, engine oil level, washer fluid level and battery charge level.</p>
+      <p>If more than one WebSocket connection is established between a client application and the server then each connection
+      MUST be managed independently. For example, subscriptions created using a particular WebSocket connection SHALL only trigger
+      notifications via that connection and the client MUST use that WebSocket connection to unsubscribe. </p>
 
-	<p>Exposing vehicle signals in a standardized manner facilitates the integration of vehicles within the Web of Things (WoT)
-	and supports future use case innovations in a variety of fields including transportation, safety, navigation, energy management,
-	smart transportation and consumer infotainment.</p>
-	    
-	<p>The data format used for client/server communication within this specification is JSON encoded strings, however other data formats may be supported in future versions of the specification.</p>
-      </section>
+      <p>If more than one WebSocket connection has been established
+      between one or more clients and a particular server instance, there
+      is a risk that race conditions and concurrency issues could occur.
+      An example of this would be where two or more WebSocket connections
+      are used to update a particular setting at the same time.</p>
 
-      <!-- Conformance -->
-      <section id="conformance">
-	<p>This specification defines conformance criteria that apply to a single product: specifically the 'in-vehicle'
-	WebSocket <dfn>Vehicle Information Service</dfn> that implements the interfaces, semantics and behaviour
-	defined in this document. For simplicity, this usually is referred to as the 'WebSocket Server' or just 'the server'</p>
-      </section>
-
-      <!-- Terminology -->
-      <section id="terminology">
-	<h2>Terminology</h2>
- 	<p>The term 'WebSocket' when used in this document, is as defined in the W3C WebSocket API
- 	(see <a href="https://www.w3.org/TR/2011/WD-websockets-20110929">here</a>) and the WebSocket Protocol
- 	(see <a href="https://tools.ietf.org/html/rfc6455">RFC6455</a>).</p>
-      </section>
-
-      <!-- Table of Figures -->
-      <section id="tof"></section>
-
-      <!-- Architecture -->
-      <section id="architecture" class="informative">
-        <h2>Architecture</h2>
-        <h3>Introduction</h3>
-      <p>In a typical vehicle design, signals and data are transmitted between Electronic Control Units (ECUs) connected
-      via internal vehicle networks. These include Controller Area Networks (CAN), Media Oriented Systems Transport (MOST)
-      and Local Interconnect Networks (LIN). ECUs on these networks broadcast messages on network buses, and other ECUs on the
-      bus respond to the messages.</p>
-
-      <p>In the component diagram included below, the internal vehicle CAN, MOST and LIN networks and the ECUs that communicate
-      via these networks are abstracted and for simplicity, represented by the <dfn>System</dfn> component.</p>
-
-      <p>For safety, security and commercial reasons not all clients should be able to GET, SET or SUBSCRIBE to particular vehicle
-      signals and data attributes. As a consequence, access-control must be managed so clients cannot simply connect directly to ECUs
-      or to CAN, MOST or LIN network buses.</p>
-
-      <p>In this specification, the term 'signal' refers to a value that can change over time, for example, vehicle speed,
-      whilst 'static data' or simply 'data' is used for a value that does not change e.g. vehicle length.</p>
-
-      <p>The vehicle signals and static data that are available within the vehicle System are exposed in a controlled
-      manner to the Web Socket Server. The interface and communication mechanisms that are used between the vehicle System and
-      the Web Socket Server are outside of the scope of this specification.</p>
-
-      <figure>
-        <img src="images/W3C_Vehicle_APIs_Component_Diagram_v1_4.png" alt="Component diagram showing W3C Vehicle Information APIs">
-        <figcaption>Diagram showing Components that implement the W3C Vehicle Information APIs and their clients</figcaption>
-      </figure>
-
-      <h3>WebSocket Server</h3>
-      <p>The <dfn>WebSocket Server</dfn> is the vehicle system that is responsible for exposing vehicle signals and data to
-      its clients by implementing the interface and behaviours defined in this <dfn>Vehicle Information Service Specification (VISS)</dfn>.</p>
-
+      <p>Unless explicitly stated otherwise, the client can only assume
+      that the server implements a simple concurrency model where lost
+      updates and dirty reads could potentially occur if the server has
+      more than one WebSocket connection open.</p>	      
+	      
       <p>The WebSocket Server exposes signals and data in a manner that is consistent with the <dfn>Vehicle Signal Specification (VSS)</dfn>.
       This defines a 'tree-like' logical taxonomy of the vehicle, (formally a Directed Acyclic Graph), where major vehicle structures
       (e.g. body, engine) are near the top of the tree and the logical assemblies and components that comprise them, are defined as
